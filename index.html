@@ -100,8 +100,20 @@
               </p>
             </ul>
           </div>
+          <style>
+            #stop {
+              margin-left: 280px;
+              font-weight: 100;
+              padding: 10px 10px;
+              color: white;
+              background-color: #cc1616;
+              font-size: medium;
+            }
+          </style>
 
           <div id="scroll" class="col-lg-6 pt-4 pt-lg-0 order-2 order-lg-2 content" data-aos="fade-right">
+            <a id="stop" type="button" class="border border-danger rounded-lg"
+              style="display: none;"><strong>중단하기</strong></a>
             <video id="videoInput" style="display: none;"></video>
             <div>
               <canvas id="videoOutput"></canvas>
@@ -317,8 +329,9 @@
       video.height = h;
       function successCallback(stream) {
         video.srcObject = stream;
-        localStream = stream.getTracks()[0];
+        localStream = stream.getTracks();
         video.play();
+        flag = true;
       }
       function errorCallback(error) {
         console.log(error);
@@ -327,6 +340,7 @@
       let canvas = document.getElementById("videoOutput");
       canvas.width = w;
       canvas.height = h;
+      canvas.style.display = "block";
       let label_container = document.getElementById("label-container")
       let counter = document.getElementById("counter")
       let scroll = document.getElementById("scroll")
@@ -348,6 +362,21 @@
         setInterval(sendImage, 1000);
       }
 
+      const stopbtn = document.getElementById("stop")
+      stopbtn.style.display = "inline"
+      function stop_stream(stream) {
+        canvas.style.display = "none";
+        label_container.style.display = "none";
+        counter.style.display = "none";
+        stopbtn.style.display = "none";
+        localStream.forEach((track) => {
+          track.stop();
+        });
+        flag = false;
+      }
+
+      stopbtn.addEventListener("click", stop_stream)
+
       async function detectFaces() {
 
         const prediction = await faceModel.estimateFaces(video, false);
@@ -356,6 +385,7 @@
           clearInterval(timer)
         } else if (prediction.length == 0) {
           console.log('no face')
+
         }
       }
 
@@ -388,11 +418,16 @@
       }
       let delay = 10000;
       // call detect faces every 100 milliseconds or 10 times every second
-      video.addEventListener("loadeddata", async () => {
-        faceModel = await blazeface.load();
-        timer = setInterval(detectFaces, delay);
+      if (flag === true) {
 
-      });
+        video.addEventListener("loadeddata", async () => {
+          faceModel = await blazeface.load();
+          timer = setInterval(detectFaces, delay);
+
+        });
+      } else {
+        null;
+      }
 
     }
   </script>
